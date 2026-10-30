@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f8fb">
+<title>Satya's Gold Calculator</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e6eaf0;--blue:#2457c5;--blue2:#edf3ff;--green:#147d54;--shadow:0 8px 28px rgba(25,45,80,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:900px;margin:auto;padding:22px 16px 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.brand{font-weight:800;font-size:21px;letter-spacing:-.4px}.sub{color:var(--muted);font-size:12px}.pill{border-radius:999px;padding:6px 10px;background:#e9f7ef;color:#147d54;font-size:12px;font-weight:700}
+.hero{background:linear-gradient(135deg,#fff,#f1f5ff);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.herohead{display:flex;justify-content:space-between;align-items:center;gap:10px}.hero h1{font-size:19px;margin:0}.prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.price{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px}.price small{color:var(--muted)}.price strong{display:block;font-size:25px;margin-top:4px;letter-spacing:-.5px}.price span{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:var(--shadow);min-width:0}.card h2{font-size:16px;margin:0 0 13px}.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:650;margin-bottom:5px}input,select{width:100%;border:1px solid #d7deea;border-radius:10px;padding:11px 12px;font:inherit;color:var(--ink);background:#fff;min-width:0}input:focus,select:focus{outline:2px solid #b8ccff;border-color:var(--blue)}
+button{border:0;border-radius:11px;padding:11px 14px;background:var(--blue);color:white;font-weight:700;font:inherit;cursor:pointer}button.secondary{background:var(--blue2);color:var(--blue)}button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.row span{color:var(--muted);font-size:13px}.row b{font-variant-numeric:tabular-nums;text-align:right}
+.result{font-size:23px;font-weight:800;color:var(--green);letter-spacing:-.4px}.muted{color:var(--muted)}.tiny{font-size:11px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;background:#edf0f6;padding:4px;border-radius:12px;margin-bottom:13px}.tabs button{flex:1;background:transparent;color:var(--muted);padding:8px}.tabs button.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px #0001}
+.status{font-size:12px;color:var(--muted);margin-top:8px}.status.ok{color:var(--green)}.status.err{color:#b42318}
+.full{grid-column:1/-1}.note{background:#fff8e8;border:1px solid #f4e0ad;color:#775b16;border-radius:12px;padding:12px;font-size:12px;margin-top:14px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.prices{grid-template-columns:1fr 1fr}.wrap{padding:16px 12px 34px}.price strong{font-size:21px}.fieldgrid{gap:9px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="brand">🟡 SATYA'S GOLD CALCULATOR</div><div class="sub">India • 22K / 24K • Gold & jewellery calculator</div></div><span class="pill">Light edition</span></div>
+  <section class="hero">
+    <div class="herohead"><div><h1>Estimated market rate</h1><div class="sub" id="updated">Manual values / not yet refreshed</div></div><button class="secondary" id="refresh">↻ Refresh live</button></div>
+    <div class="prices">
+      <div class="price"><small>24K · per gram</small><strong id="rate24">₹—</strong><span id="rate24ten">10g: ₹—</span></div>
+      <div class="price"><small>22K · per gram</small><strong id="rate22">₹—</strong><span id="rate22ten">10g: ₹—</span></div>
+    </div>
+    <div class="status" id="liveStatus">Live mode uses public price endpoints when available. Manual mode always works.</div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>1. Price source</h2>
+      <div class="tabs"><button id="manualTab" class="active">Manual</button><button id="liveTab">Live</button></div>
+      <div id="manualFields">
+        <div class="fieldgrid">
+          <div><label>XAUUSD ($ / troy oz)</label><input id="xau" type="number" step="0.01" value="3880"></div>
+          <div><label>USD / INR</label><input id="fx" type="number" step="0.01" value="94.94"></div>
+        </div>
+        <div class="actions"><button id="applyManual">Calculate manual rate</button></div>
+      </div>
+      <div id="liveFields" hidden>
+        <p class="muted" style="font-size:13px;margin-top:0">Automatically fetches indicative XAUUSD and USD/INR data from a free public feed. This is a spot-derived estimate, not an official IBJA benchmark or jeweller quote.</p>
+        <div class="row"><span>Gold feed</span><b id="goldFeed">Not fetched</b></div>
+        <div class="row"><span>FX feed</span><b id="fxFeed">Not fetched</b></div>
+        <div class="tiny">Source: <a href="https://xaus.com/api/" target="_blank" rel="noopener">XAUS Gold Data API</a> · automatic fetch when this page opens.</div>
+        <div class="actions"><button id="fetchLive">Fetch live prices</button><button class="secondary" id="useManual">Use manual values</button></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. India cost assumptions</h2>
+      <div class="fieldgrid">
+        <div><label>Customs duty (%)</label><input id="duty" type="number" step="0.01" value="15"></div>
+        <div><label>Domestic premium (%)</label><input id="premium" type="number" step="0.01" value="0"></div>
+      </div>
+      <p class="tiny">Duty is editable: verify the current official customs rate. Premium should only be added if not already included in the benchmark rate.</p>
+    </section>
+
+    <section class="card full">
+      <h2>Vizag Retail Reference — Automatic</h2>
+      <p class="muted" style="font-size:13px;margin-top:0">Live city reference from All India Bullion. It refreshes independently and shows its own last-updated time. This is a retail-metal reference, not an individual shop quote.</p>
+      <iframe src="https://allindiabullion.com/widget/andhra-pradesh/visakhapatnam" title="All India Bullion Visakhapatnam gold rates" width="100%" height="330" style="border:0;border-radius:12px;background:#fff" loading="lazy"></iframe>
+      <p class="tiny">Source: <a href="https://allindiabullion.com/gold-rate/andhra-pradesh/visakhapatnam" target="_blank" rel="noopener">All India Bullion — Visakhapatnam</a>. GST and making charges extra. Cross-origin security means the embedded widget can display rates, but this local app cannot automatically read those values into the bill calculator.</p>
+    </section>
+
+    <section class="card">
+      <h2>Indian Bullion Dealer Rate</h2>
+      <p class="muted" style="font-size:13px;margin-top:0">Enter the latest local bullion dealer quote. Rates are ₹ per 10 grams. This is a dealer quote, not an automatic official feed.</p>
+      <div class="fieldgrid">
+        <div><label>24K / 999 rate (₹ / 10g)</label><input id="bullion999" type="number" min="0" step="0.01" placeholder="Enter 24K bullion quote"></div>
+        <div><label>22K / 916 rate (₹ / 10g)</label><input id="bullion916" type="number" min="0" step="0.01" placeholder="Enter 22K bullion quote"></div>
+        <div><label>Quote date</label><input id="bullionDate" type="date"></div>
+      </div>
+      <p class="tiny" id="bullionStatus">No dealer quote entered yet. Ask a local bullion dealer or jeweller for today's rate.</p>
+    </section>
+
+    <section class="card">
+      <h2>3. Jewellery bill estimate</h2>
+      <div class="fieldgrid">
+        <div><label>Purity</label><select id="purity"><option value="22">22K</option><option value="24">24K</option></select></div>
+        <div><label>Weight (grams)</label><input id="weight" type="number" min="0" step="0.001" value="10"></div>
+        <div><label>Making charge (₹ / gram)</label><input id="making" type="number" min="0" step="0.01" value="0"></div>
+        <div><label>VA / wastage (%)</label><input id="va" type="number" min="0" step="0.01" value="0"></div>
+        <div><label>GST (%)</label><input id="gst" type="number" min="0" step="0.01" value="3"></div>
+        <div><label>Jewellery bill rate source</label><select id="billSource"><option value="intl">International model</option><option value="ibja">IBJA benchmark</option><option value="bullion">Indian bullion dealer rate</option><option value="manual">Manual jeweller rate</option></select></div>
+        <div id="manualRateWrap" hidden><label>Manual rate (₹ / gram)</label><input id="manualRate" type="number" min="0" step="0.01" placeholder="Enter jeweller rate per gram"></div>
+      </div>
+      <p class="tiny" id="billSourceStatus">Bill uses International model rate.</p>
+    </section>
+
+    <section class="card">
+      <h2>4. Rate calculation</h2>
+      <div class="row"><span>24K base (₹/g)</span><b id="base24">₹—</b></div>
+      <div class="row"><span>24K after duty & premium</span><b id="landed24">₹—</b></div>
+      <div class="row"><span>22K after duty & premium</span><b id="landed22">₹—</b></div>
+      <div class="row"><span>Selected rate (₹/g)</span><b id="selectedRate">₹—</b></div>
+    </section>
+
+
+    <section class="card full">
+      <h2>IBJA benchmark · AM / PM</h2>
+      <p class="muted" style="font-size:13px;margin-top:-5px">IBJA rates already include import/customs levies and exclude GST. Enter official rates per 10g, or fetch through an IBJA API subscription token.</p>
+      <div class="fieldgrid">
+        <div><label>IBJA 999 / 24K AM (₹ per 10g)</label><input id="ibja999am" type="number" step="0.01" placeholder="Enter AM 999 rate"></div>
+        <div><label>IBJA 999 / 24K PM (₹ per 10g)</label><input id="ibja999pm" type="number" step="0.01" placeholder="Enter PM 999 rate"></div>
+        <div><label>IBJA 916 / 22K AM (₹ per 10g)</label><input id="ibja916am" type="number" step="0.01" placeholder="Enter AM 916 rate"></div>
+        <div><label>IBJA 916 / 22K PM (₹ per 10g)</label><input id="ibja916pm" type="number" step="0.01" placeholder="Enter PM 916 rate"></div>
+      </div>
+      <div class="fieldgrid" style="margin-top:11px">
+        <div><label>IBJA API access token (optional)</label><input id="ibjaToken" type="password" autocomplete="off" placeholder="Paste subscription token"></div>
+        <div><label>IBJA date (DD/MM/YYYY)</label><input id="ibjaDate" type="text" placeholder="Auto: today's date"></div>
+      </div>
+      <div class="actions"><button id="fetchIbja">Fetch IBJA AM / PM</button><button class="secondary" id="clearIbja">Clear IBJA fields</button></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px"><input id="autoIbja" type="checkbox" style="width:auto"> Automatically fetch IBJA when this page opens (requires token)</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input id="rememberIbjaToken" type="checkbox" style="width:auto"> Remember API token on this device</label>
+      <div class="status" id="ibjaStatus">Manual entry works without an API token. Official API access is subscription-based.</div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="row"><span>Selected IBJA 24K (₹/g)</span><b id="ibja24g">—</b></div>
+          <div class="row"><span>Selected IBJA 22K (₹/g)</span><b id="ibja22g">—</b></div>
+        </div>
+        <div>
+          <div class="row"><span>Intl model vs IBJA 24K</span><b id="diff24">—</b></div>
+          <div class="row"><span>Intl model vs IBJA 22K</span><b id="diff22">—</b></div>
+        </div>
+      </div>
+      <p class="tiny">Comparison uses the latest entered AM/PM figure (PM preferred). Difference = international conversion + entered duty/premium minus IBJA. IBJA 999/916 values are per 10g. Saturday, Sunday and holidays may have no new benchmark.</p>
+    </section>
+
+    <section class="card full">
+      <h2>5. Final jewellery bill</h2>
+      <div class="grid">
+        <div>
+          <div class="row"><span>Gold value</span><b id="goldValue">₹—</b></div>
+          <div class="row"><span>VA / wastage amount</span><b id="vaValue">₹—</b></div>
+          <div class="row"><span>Making charges</span><b id="makingValue">₹—</b></div>
+          <div class="row"><span>Subtotal</span><b id="subtotal">₹—</b></div>
+          <div class="row"><span>GST estimate</span><b id="gstValue">₹—</b></div>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;background:#f2f8f4;border-radius:14px;padding:17px">
+          <div class="sub">Estimated total bill</div><div class="result" id="finalBill">₹—</div><div class="tiny">Illustrative only; compare with jeweller's tax invoice.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="note"><b>Important:</b> This is an educational estimate, not an official IBJA or jeweller quote. Jewellery bill source can be International model, IBJA benchmark or Manual jeweller rate. IBJA benchmark already includes import/customs levies, so do not add duty again to the IBJA value. Official API needs a subscription token; browser CORS may prevent direct fetch, in which case use manual entry. It applies the entered duty as a simple percentage to the international converted value. Actual Indian benchmark pricing can include additional market factors; avoid adding duty or premium again if already reflected in a quoted benchmark. Import IGST is not treated as a permanent cost where eligible input tax credit is available. Retail GST and shop billing treatment should be verified on the invoice.</div>
+  <div class="actions"><button class="secondary" id="save">Save inputs on this device</button><button class="secondary" id="reset">Reset defaults</button></div>
+  <p class="tiny">Saved settings stay in this browser on this device. For use on both phone and computer, host this folder as a website or install it as a PWA from a secure HTTPS site.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ids=['xau','fx','duty','premium','purity','weight','making','va','gst','ibja999am','ibja999pm','ibja916am','ibja916pm','ibjaDate','bullion999','bullion916','bullionDate','billSource','manualRate','autoIbja','rememberIbjaToken'];
+const defaults={xau:3880,fx:94.94,duty:15,premium:0,purity:22,weight:10,making:0,va:0,gst:3,billSource:'intl',manualRate:0,bullion999:0,bullion916:0,bullionDate:'',autoIbja:false,rememberIbjaToken:false};
+let mode='manual';
+let current={xau:3880,fx:94.94};
+const num=id=>Math.max(0,Number($(id).value)||0);
+const inr=v=>'₹'+(Number.isFinite(v)?v:0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function calc(){
+ const xau=num('xau'),fx=num('fx'),duty=num('duty'),premium=num('premium');
+ const base=xau*fx/31.1035;
+ const r24=base*(1+duty/100)*(1+premium/100),r22=r24*22/24;
+ const is22=$('purity').value==='22';
+ const intlSelected=is22?r22:r24;
+ const ibjaSelected=latestIbja(is22?'916':'999');
+ const source=$('billSource').value;
+ const manualSelected=num('manualRate');
+ let selected=intlSelected, sourceText='Bill uses International model rate.';
+ if(source==='ibja'){
+   if(ibjaSelected!==null){selected=ibjaSelected/10;sourceText='Bill uses IBJA '+(is22?'916 / 22K':'999 / 24K')+' benchmark ('+( $('ibjaDate').value||'selected date')+').';}
+   else {sourceText='IBJA rate is not entered/fetched yet. International model is temporarily shown; fetch IBJA before relying on this bill.';}
+ } else if(source==='bullion'){
+   const bullionRate=num(is22?'bullion916':'bullion999');
+   if(bullionRate>0){selected=bullionRate/10;sourceText='Bill uses Indian bullion dealer '+(is22?'916 / 22K':'999 / 24K')+' quote per 10g.';}
+   else {sourceText='Enter the Indian bullion dealer quote for '+(is22?'22K / 916':'24K / 999')+' per 10g. International model is temporarily shown until then.';}
+ } else if(source==='manual'){
+   if(manualSelected>0){selected=manualSelected;sourceText='Bill uses your manual jeweller rate.';}
+   else {sourceText='Enter a manual rate per gram. International model is temporarily shown until then.';}
+ }
+ $('manualRateWrap').hidden=source!=='manual';
+ $('billSourceStatus').textContent=sourceText;
+ const weight=num('weight'),gold=selected*weight,va=gold*num('va')/100,making=weight*num('making');
+ const subtotal=gold+va+making,gst=subtotal*num('gst')/100,total=subtotal+gst;
+ $('rate24').textContent=inr(r24);$('rate22').textContent=inr(r22);
+ $('rate24ten').textContent='10g: '+inr(r24*10);$('rate22ten').textContent='10g: '+inr(r22*10);
+ $('base24').textContent=inr(base);$('landed24').textContent=inr(r24);$('landed22').textContent=inr(r22);$('selectedRate').textContent=inr(selected);
+ $('goldValue').textContent=inr(gold);$('vaValue').textContent=inr(va);$('makingValue').textContent=inr(making);
+ $('subtotal').textContent=inr(subtotal);$('gstValue').textContent=inr(gst);$('finalBill').textContent=inr(total);
+ const i24 = latestIbja('999'), i22 = latestIbja('916');
+ $('ibja24g').textContent=i24===null?'—':inr(i24/10);
+ $('ibja22g').textContent=i22===null?'—':inr(i22/10);
+ $('diff24').textContent=i24===null?'—':inr(r24-i24/10)+' /g';
+ $('diff22').textContent=i22===null?'—':inr(r22-i22/10)+' /g';
+}
+function setMode(m){mode=m;$('manualTab').classList.toggle('active',m==='manual');$('liveTab').classList.toggle('active',m==='live');$('manualFields').hidden=m!=='manual';$('liveFields').hidden=m!=='live';}
+$('manualTab').onclick=()=>setMode('manual');$('liveTab').onclick=()=>setMode('live');
+$('applyManual').onclick=()=>{current={xau:num('xau'),fx:num('fx')};$('updated').textContent='Manual inputs · '+new Date().toLocaleString();calc();};
+$('billSource').addEventListener('change',calc);
+$('manualRate').addEventListener('input',calc);
+['bullion999','bullion916','bullionDate'].forEach(id=>$(id).addEventListener('input',()=>{
+ $('bullionStatus').textContent=(num('bullion999')||num('bullion916'))?'Dealer quote entered. Confirm its date and purity before using.':'No dealer quote entered yet.';
+ calc();
+}));
+$('useManual').onclick=()=>{setMode('manual');$('applyManual').click();};
+async function fetchLive(){
+ $('liveStatus').textContent='Fetching automatic indicative gold + INR rates…';$('liveStatus').className='status';
+ try{
+  const r=await fetch('https://xaus.com/api/v1/spot?currency=INR&unit=gram',{cache:'no-store'});
+  if(!r.ok)throw Error('Gold/FX feed unavailable (HTTP '+r.status+')');
+  const data=await r.json();
+  const gold=Number(data.spot_usd_oz),rate=Number(data.fx_rate);
+  if(!(gold>0&&rate>0))throw Error('Feed returned invalid values');
+  $('xau').value=gold.toFixed(2);$('fx').value=rate.toFixed(4);
+  $('goldFeed').textContent='$'+gold.toFixed(2)+' / troy oz';
+  $('fxFeed').textContent='₹'+rate.toFixed(4)+' per USD';
+  const stamp=data.price_as_of||data.updated_at||new Date().toISOString();
+  const stale=data.stale===true||data.fx_stale===true;
+  $('updated').textContent='Indicative feed · '+new Date(stamp).toLocaleString()+(stale?' · last available quote':'');
+  $('liveStatus').textContent='Automatic indicative rates loaded. These are spot-derived estimates, NOT official IBJA or jeweller rates. Source: XAUS; refresh is cached around 60 seconds.';
+  $('liveStatus').className='status ok';
+  calc();
+ }catch(e){
+  $('liveStatus').textContent='Automatic rate fetch failed: '+e.message+'. Check internet and tap Fetch live prices to retry; manual values are still available.';
+  $('liveStatus').className='status err';
+ }
+}
+$('fetchLive').onclick=fetchLive;$('refresh').onclick=()=>{setMode('live');fetchLive()};
+$('save').onclick=()=>{const data={};ids.forEach(id=>{data[id]=(['autoIbja','rememberIbjaToken'].includes(id)?$(id).checked:$(id).value);});localStorage.setItem('goldRateProInputs',JSON.stringify(data));$('liveStatus').textContent='Inputs saved on this device.';$('liveStatus').className='status ok';};
+$('reset').onclick=()=>{Object.entries(defaults).forEach(([k,v])=>$(k).value=v);$('updated').textContent='Manual defaults restored';calc();};
+
+function latestIbja(purity){
+ const am=Number($('ibja'+purity+'am').value), pm=Number($('ibja'+purity+'pm').value);
+ if(Number.isFinite(pm)&&pm>0)return pm;
+ if(Number.isFinite(am)&&am>0)return am;
+ return null;
+}
+function todayDmy(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+$('ibjaDate').value=todayDmy();
+if(!$('bullionDate').value){const d=new Date();$('bullionDate').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+['ibja999am','ibja999pm','ibja916am','ibja916pm'].forEach(id=>$(id).addEventListener('input',calc));
+$('rememberIbjaToken').addEventListener('change',()=>{
+ if($('rememberIbjaToken').checked && $('ibjaToken').value.trim()){
+   localStorage.setItem('goldRateProIbjaToken',$('ibjaToken').value.trim());
+   $('ibjaStatus').textContent='Token saved on this device. Keep this device private.';
+ }
+ if(!$('rememberIbjaToken').checked) localStorage.removeItem('goldRateProIbjaToken');
+});
+$('ibjaToken').addEventListener('change',()=>{
+ if($('rememberIbjaToken').checked && $('ibjaToken').value.trim())localStorage.setItem('goldRateProIbjaToken',$('ibjaToken').value.trim());
+});
+$('clearIbja').onclick=()=>{['ibja999am','ibja999pm','ibja916am','ibja916pm'].forEach(id=>$(id).value='');$('ibjaStatus').textContent='IBJA values cleared.';calc();};
+$('fetchIbja').onclick=async()=>{
+ const token=$('ibjaToken').value.trim();
+ if(!token){$('ibjaStatus').textContent='Official IBJA API subscription token avasaram. Token lekunda AM/PM values manual ga enter cheyyi.';$('ibjaStatus').className='status err';return;}
+ const date=$('ibjaDate').value.trim()||todayDmy();
+ const url='https://ibjarates.com/API/GoldRates/?ACCESS_TOKEN='+encodeURIComponent(token)+'&START_DATE='+encodeURIComponent(date)+'&END_DATE='+encodeURIComponent(date);
+ $('ibjaStatus').textContent='Official IBJA API ni request chesthunnam…';$('ibjaStatus').className='status';
+ try{
+  const res=await fetch(url,{cache:'no-store'});
+  if(!res.ok)throw Error('HTTP '+res.status);
+  const data=await res.json();
+  if(!Array.isArray(data))throw Error(data.message||'Unexpected API response');
+  let found=0;
+  data.forEach(item=>{
+   const purity=String(item.Purity||'').trim();
+   const time=String(item.RateTime||'').toUpperCase();
+   const rate=Number(item.GoldRate);
+   if(!rate||!['999','916'].includes(purity))return;
+   const slot=(time.includes('PM')||time.includes('5'))?'pm':'am';
+   $('ibja'+purity+slot).value=rate;found++;
+  });
+  if(!found)throw Error(data[0]?.message||'No AM/PM 999/916 records returned for this date');
+  $('ibjaStatus').textContent='IBJA API data loaded. Verify date, purity and AM/PM session before using.';$('ibjaStatus').className='status ok';calc();
+ }catch(e){
+  $('ibjaStatus').textContent='API fetch failed: '+e.message+'. Browser CORS/network restrictions or token access may block it; enter official values manually.';$('ibjaStatus').className='status err';
+ }
+};
+
+ids.forEach(id=>$(id).addEventListener('input',calc));
+try{
+ const saved=JSON.parse(localStorage.getItem('goldRateProInputs')||'null');
+ if(saved)Object.entries(saved).forEach(([k,v])=>{if($(k)){if(['autoIbja','rememberIbjaToken'].includes(k))$(k).checked=!!v;else $(k).value=v;}});
+ const storedToken=localStorage.getItem('goldRateProIbjaToken');
+ if(storedToken){$('ibjaToken').value=storedToken;$('rememberIbjaToken').checked=true;}
+}catch(e){}
+calc();
+setMode('live');
+fetchLive();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if($('autoIbja').checked && $('ibjaToken').value.trim()){
+ $('ibjaDate').value=todayDmy();
+if(!$('bullionDate').value){const d=new Date();$('bullionDate').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+ $('fetchIbja').click();
+}
+</script>
+</body></html>
