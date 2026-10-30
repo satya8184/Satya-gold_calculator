@@ -225,75 +225,6 @@ function calc(){
  if(source==='ibja'){
    if(ibjaSelected!==null){selected=ibjaSelected/10;sourceText='Bill uses IBJA '+(is22?'916 / 22K':'999 / 24K')+' benchmark ('+( $('ibjaDate').value||'selected date')+').';}
    else {sourceText='IBJA rate is not entered/fetched yet. International model is temporarily shown; fetch IBJA before relying on this bill.';}
- } else if(sourceor fetch through an IBJA API subscription token.</p>
-      <div class="fieldgrid">
-        <div><label>IBJA 999 / 24K AM (₹ per 10g)</label><input id="ibja999am" type="number" step="0.01" placeholder="Enter AM 999 rate"></div>
-        <div><label>IBJA 999 / 24K PM (₹ per 10g)</label><input id="ibja999pm" type="number" step="0.01" placeholder="Enter PM 999 rate"></div>
-        <div><label>IBJA 916 / 22K AM (₹ per 10g)</label><input id="ibja916am" type="number" step="0.01" placeholder="Enter AM 916 rate"></div>
-        <div><label>IBJA 916 / 22K PM (₹ per 10g)</label><input id="ibja916pm" type="number" step="0.01" placeholder="Enter PM 916 rate"></div>
-      </div>
-      <div class="fieldgrid" style="margin-top:11px">
-        <div><label>IBJA API access token (optional)</label><input id="ibjaToken" type="password" autocomplete="off" placeholder="Paste subscription token"></div>
-        <div><label>IBJA date (DD/MM/YYYY)</label><input id="ibjaDate" type="text" placeholder="Auto: today's date"></div>
-      </div>
-      <div class="actions"><button id="fetchIbja">Fetch IBJA AM / PM</button><button class="secondary" id="clearIbja">Clear IBJA fields</button></div>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px"><input id="autoIbja" type="checkbox" style="width:auto"> Automatically fetch IBJA when this page opens (requires token)</label>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input id="rememberIbjaToken" type="checkbox" style="width:auto"> Remember API token on this device</label>
-      <div class="status" id="ibjaStatus">Manual entry works without an API token. Official API access is subscription-based.</div>
-      <div class="grid" style="margin-top:12px">
-        <div>
-          <div class="row"><span>Selected IBJA 24K (₹/g)</span><b id="ibja24g">—</b></div>
-          <div class="row"><span>Selected IBJA 22K (₹/g)</span><b id="ibja22g">—</b></div>
-        </div>
-        <div>
-          <div class="row"><span>Intl model vs IBJA 24K</span><b id="diff24">—</b></div>
-          <div class="row"><span>Intl model vs IBJA 22K</span><b id="diff22">—</b></div>
-        </div>
-      </div>
-      <p class="tiny">Comparison uses the latest entered AM/PM figure (PM preferred). Difference = international conversion + entered duty/premium minus IBJA. IBJA 999/916 values are per 10g. Saturday, Sunday and holidays may have no new benchmark.</p>
-    </section>
-
-    <section class="card full">
-      <h2>5. Final jewellery bill</h2>
-      <div class="grid">
-        <div>
-          <div class="row"><span>Gold value</span><b id="goldValue">₹—</b></div>
-          <div class="row"><span>VA / wastage amount</span><b id="vaValue">₹—</b></div>
-          <div class="row"><span>Making charges</span><b id="makingValue">₹—</b></div>
-          <div class="row"><span>Subtotal</span><b id="subtotal">₹—</b></div>
-          <div class="row"><span>GST estimate</span><b id="gstValue">₹—</b></div>
-        </div>
-        <div style="display:flex;flex-direction:column;justify-content:center;background:#f2f8f4;border-radius:14px;padding:17px">
-          <div class="sub">Estimated total bill</div><div class="result" id="finalBill">₹—</div><div class="tiny">Illustrative only; compare with jeweller's tax invoice.</div>
-        </div>
-      </div>
-    </section>
-  </div>
-  <div class="note"><b>Important:</b> This is an educational estimate, not an official IBJA or jeweller quote. Jewellery bill source can be International model, IBJA benchmark or Manual jeweller rate. IBJA benchmark already includes import/customs levies, so do not add duty again to the IBJA value. Official API needs a subscription token; browser CORS may prevent direct fetch, in which case use manual entry. It applies the entered duty as a simple percentage to the international converted value. Actual Indian benchmark pricing can include additional market factors; avoid adding duty or premium again if already reflected in a quoted benchmark. Import IGST is not treated as a permanent cost where eligible input tax credit is available. Retail GST and shop billing treatment should be verified on the invoice.</div>
-  <div class="actions"><button class="secondary" id="save">Save inputs on this device</button><button class="secondary" id="reset">Reset defaults</button></div>
-  <p class="tiny">Saved settings stay in this browser on this device. For use on both phone and computer, host this folder as a website or install it as a PWA from a secure HTTPS site.</p>
-</div>
-<script>
-const $=id=>document.getElementById(id);
-const ids=['xau','fx','duty','premium','purity','weight','making','va','gst','ibja999am','ibja999pm','ibja916am','ibja916pm','ibjaDate','bullion999','bullion916','bullionDate','billSource','manualRate','autoIbja','rememberIbjaToken'];
-const defaults={xau:3880,fx:94.94,duty:15,premium:0,purity:22,weight:10,making:0,va:0,gst:3,billSource:'intl',manualRate:0,bullion999:0,bullion916:0,bullionDate:'',autoIbja:false,rememberIbjaToken:false};
-let mode='manual';
-let current={xau:3880,fx:94.94};
-const num=id=>Math.max(0,Number($(id).value)||0);
-const inr=v=>'₹'+(Number.isFinite(v)?v:0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-function calc(){
- const xau=num('xau'),fx=num('fx'),duty=num('duty'),premium=num('premium');
- const base=xau*fx/31.1035;
- const r24=base*(1+duty/100)*(1+premium/100),r22=r24*22/24;
- const is22=$('purity').value==='22';
- const intlSelected=is22?r22:r24;
- const ibjaSelected=latestIbja(is22?'916':'999');
- const source=$('billSource').value;
- const manualSelected=num('manualRate');
- let selected=intlSelected, sourceText='Bill uses International model rate.';
- if(source==='ibja'){
-   if(ibjaSelected!==null){selected=ibjaSelected/10;sourceText='Bill uses IBJA '+(is22?'916 / 22K':'999 / 24K')+' benchmark ('+( $('ibjaDate').value||'selected date')+').';}
-   else {sourceText='IBJA rate is not entered/fetched yet. International model is temporarily shown; fetch IBJA before relying on this bill.';}
  } else if(source==='bullion'){
    const bullionRate=num(is22?'bullion916':'bullion999');
    if(bullionRate>0){selected=bullionRate/10;sourceText='Bill uses Indian bullion dealer '+(is22?'916 / 22K':'999 / 24K')+' quote per 10g.';}
@@ -417,5 +348,95 @@ if($('autoIbja').checked && $('ibjaToken').value.trim()){
 if(!$('bullionDate').value){const d=new Date();$('bullionDate').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
  $('fetchIbja').click();
 }
+
+// Next-day forecast tracker (browser-local; no background server scheduler).
+const forecastKey='satyaGoldForecastHistoryV1';
+const forecastNum=id=>Number($(id).value)||0;
+const forecastMoney=v=>'₹'+Number(v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const localISO=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)};
+function forecastValues(){
+  const goldMove=forecastNum('forecastGoldMove')/100;
+  const fxMove=forecastNum('forecastFxMove')/100;
+  const buffer=Math.max(0,forecastNum('forecastBuffer'))/100;
+  const localPremium=forecastNum('forecastLocalPremium')/100;
+  const xau=forecastNum('xau'), fx=forecastNum('fx');
+  if(!(xau>0&&fx>0)) throw Error('Munduga valid XAUUSD and USD/INR prices fetch/enter cheyyi.');
+  // Current international converted rate, using existing duty input; do not treat as IBJA.
+  const base=xau*fx/31.1035*(1+forecastNum('duty')/100)*(1+forecastNum('premium')/100);
+  const expected=base*(1+goldMove)*(1+fxMove)*(1+localPremium);
+  const low=expected*(1-buffer), high=expected*(1+buffer);
+  return {expected24:expected,expected22:expected*22/24,low24:low,high24:high,base24:base,
+    xau,fx,goldMovePct:goldMove*100,fxMovePct:fxMove*100,bufferPct:buffer*100,
+    localPremiumPct:localPremium*100,dutyPct:forecastNum('duty'),createdAt:new Date().toISOString()};
+}
+function readForecasts(){try{return JSON.parse(localStorage.getItem(forecastKey)||'[]')}catch(e){return []}}
+function writeForecasts(a){localStorage.setItem(forecastKey,JSON.stringify(a.slice(0,90)))}
+function renderForecastHistory(){
+  const items=readForecasts();
+  if(!items.length){$('forecastHistory').innerHTML='<p class="tiny">No saved forecasts yet.</p>';return}
+  const rows=items.map(x=>`<tr><td>${x.forDate||'—'}</td><td>${forecastMoney(x.expected24)}</td><td>${x.actual24?forecastMoney(x.actual24):'—'}</td><td>${x.diff24!==null&&x.diff24!==undefined?forecastMoney(x.diff24):'—'}</td><td>${x.accuracy!==null&&x.accuracy!==undefined?x.accuracy.toFixed(2)+'%':'Pending'}</td></tr>`).join('');
+  $('forecastHistory').innerHTML='<table><thead><tr><th>Date</th><th>Forecast 24K/g</th><th>Actual IBJA/g</th><th>Diff/g</th><th>Accuracy</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+let latestForecast=null;
+function showForecast(f){
+  latestForecast=f;
+  $('forecast24').textContent=forecastMoney(f.expected24);
+  $('forecast22').textContent=forecastMoney(f.expected22);
+  $('forecastRange').textContent=forecastMoney(f.low24)+' – '+forecastMoney(f.high24);
+  $('forecastFor').textContent=f.forDate;
+}
+function calculateForecast(){
+  try{
+    const f=forecastValues();const d=new Date();d.setDate(d.getDate()+1);f.forDate=localISO(d);
+    showForecast(f);
+    $('forecastStatus').textContent='Estimate ready. Save tonight snapshot to add it to history.';
+    $('forecastStatus').className='status ok';
+    return f;
+  }catch(e){$('forecastStatus').textContent=e.message;$('forecastStatus').className='status err';return null}
+}
+function saveTonightForecast(auto=false){
+  const f=calculateForecast();if(!f)return;
+  const a=readForecasts();const old=a.findIndex(x=>x.forDate===f.forDate);
+  if(old>=0){f.actual24=a[old].actual24??null;f.diff24=a[old].diff24??null;f.accuracy=a[old].accuracy??null;a.splice(old,1)}
+  else {f.actual24=null;f.diff24=null;f.accuracy=null}
+  a.unshift(f);writeForecasts(a);renderForecastHistory();
+  $('forecastStatus').textContent=(auto?'Automatic snapshot saved':'Tonight forecast saved')+' for '+f.forDate+'. Browser/device local history.';
+  $('forecastStatus').className='status ok';
+}
+function saveActualRate(){
+  const actual10=forecastNum('actualIbja24'),date=$('actualIbjaDate').value;
+  if(!(actual10>0&&date)){ $('forecastStatus').textContent='Actual IBJA 24K rate per 10g and date enter cheyyi.';$('forecastStatus').className='status err';return}
+  const a=readForecasts(),idx=a.findIndex(x=>x.forDate===date);
+  if(idx<0){$('forecastStatus').textContent='Aa date ki saved forecast dorakaledu. Munduga night forecast save cheyyi.';$('forecastStatus').className='status err';return}
+  const actual=actual10/10,diff=a[idx].expected24-actual;
+  a[idx].actual24=actual;a[idx].diff24=diff;a[idx].accuracy=Math.max(0,100-Math.abs(diff)/actual*100);
+  writeForecasts(a);
+  $('forecastDiff').textContent=(diff>0?'+':'')+forecastMoney(diff)+'/g';
+  $('forecastAccuracy').textContent=a[idx].accuracy.toFixed(2)+'%';
+  $('forecastStatus').textContent='Actual IBJA AM rate saved and forecast compared.';
+  $('forecastStatus').className='status ok';renderForecastHistory();
+}
+$('calcForecast').addEventListener('click',calculateForecast);
+$('saveForecast').addEventListener('click',()=>saveTonightForecast(false));
+$('saveActual').addEventListener('click',saveActualRate);
+$('clearForecastHistory').addEventListener('click',()=>{
+  if(confirm('Saved forecast history motham clear cheyyala?')){
+    localStorage.removeItem(forecastKey);renderForecastHistory();
+    $('forecastDiff').textContent='—';$('forecastAccuracy').textContent='—';
+    $('forecastStatus').textContent='Forecast history cleared.';
+  }
+});
+(function initForecast(){
+  const today=localISO(new Date());$('actualIbjaDate').value=today;
+  renderForecastHistory();
+  // Best-effort only: the page must be open in the browser after 10 PM.
+  const now=new Date();
+  if(now.getHours()>=22){
+    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+    const existing=readForecasts().some(x=>x.forDate===localISO(tomorrow));
+    if(!existing)setTimeout(()=>saveTonightForecast(true),1200);
+  }
+})();
+
 </script>
 </body></html>
