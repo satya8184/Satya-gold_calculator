@@ -23,6 +23,19 @@ button{border:0;border-radius:11px;padding:11px 14px;background:var(--blue);colo
 .status{font-size:12px;color:var(--muted);margin-top:8px}.status.ok{color:var(--green)}.status.err{color:#b42318}
 .full{grid-column:1/-1}.note{background:#fff8e8;border:1px solid #f4e0ad;color:#775b16;border-radius:12px;padding:12px;font-size:12px;margin-top:14px}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.prices{grid-template-columns:1fr 1fr}.wrap{padding:16px 12px 34px}.price strong{font-size:21px}.fieldgrid{gap:9px}}
+
+.forecast-card{border:1px solid #cbd8f5;background:linear-gradient(135deg,#fff,#f5f8ff)}
+.forecast-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.forecast-metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.forecast-metric small{display:block;color:var(--muted);font-size:11px}
+.forecast-metric strong{display:block;font-size:19px;margin-top:4px}
+.forecast-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.forecast-history{overflow-x:auto}
+.forecast-history table{width:100%;border-collapse:collapse;font-size:12px}
+.forecast-history th,.forecast-history td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.forecast-history th:first-child,.forecast-history td:first-child{text-align:left}
+@media(max-width:420px){.forecast-grid{grid-template-columns:1fr 1fr}.forecast-metric strong{font-size:16px}}
+
 </style>
 </head>
 <body>
@@ -107,9 +120,112 @@ button{border:0;border-radius:11px;padding:11px 14px;background:var(--blue);colo
     </section>
 
 
+
+    <section class="card full forecast-card">
+      <h2>Next-Day Gold Forecast · Night Snapshot</h2>
+      <p class="muted" style="font-size:13px;margin-top:-5px">Ratri market snapshot base chesukoni next-day indicative rate estimate chestundi. Idi guaranteed prediction kaadu; IBJA/jeweller official quote kuda kaadu.</p>
+      <div class="fieldgrid">
+        <div><label>Expected overnight gold move (%)</label><input id="forecastGoldMove" type="number" step="0.01" value="0"></div>
+        <div><label>Expected USD/INR move (%)</label><input id="forecastFxMove" type="number" step="0.01" value="0"></div>
+        <div><label>Forecast range buffer (%)</label><input id="forecastBuffer" type="number" min="0" step="0.05" value="0.50"></div>
+        <div><label>Local premium (%)</label><input id="forecastLocalPremium" type="number" step="0.01" value="0"></div>
+      </div>
+      <div class="forecast-actions">
+        <button id="calcForecast">Calculate next-day estimate</button>
+        <button class="secondary" id="saveForecast">Save tonight's forecast</button>
+      </div>
+      <div class="status" id="forecastStatus">Use live prices after refreshing, then calculate and save the forecast. Automatic snapshot runs only when this page is open after 10:00 PM.</div>
+      <div class="forecast-grid" style="margin-top:12px">
+        <div class="forecast-metric"><small>Next day 24K · expected / gram</small><strong id="forecast24">₹—</strong></div>
+        <div class="forecast-metric"><small>Next day 22K · expected / gram</small><strong id="forecast22">₹—</strong></div>
+        <div class="forecast-metric"><small>24K possible range / gram</small><strong id="forecastRange">₹—</strong></div>
+        <div class="forecast-metric"><small>Forecast for</small><strong id="forecastFor">—</strong></div>
+      </div>
+      <div class="fieldgrid" style="margin-top:14px">
+        <div><label>Actual IBJA AM 24K / 999 (₹ per 10g)</label><input id="actualIbja24" type="number" min="0" step="0.01" placeholder="Enter next morning AM rate"></div>
+        <div><label>Actual rate date</label><input id="actualIbjaDate" type="date"></div>
+      </div>
+      <div class="forecast-actions"><button class="secondary" id="saveActual">Save actual AM rate & compare</button></div>
+      <div class="row"><span>Forecast vs actual difference (₹/g)</span><b id="forecastDiff">—</b></div>
+      <div class="row"><span>Forecast accuracy (approx.)</span><b id="forecastAccuracy">—</b></div>
+      <h3 style="font-size:14px;margin:16px 0 8px">Forecast history</h3>
+      <div class="forecast-history" id="forecastHistory"><p class="tiny">No saved forecasts yet.</p></div>
+      <div class="forecast-actions"><button class="secondary" id="clearForecastHistory">Clear forecast history</button></div>
+      <p class="tiny">Accuracy is calculated against the entered IBJA AM 24K rate: 100 − (absolute difference ÷ actual rate × 100). This measures tracking error, not a guarantee of future accuracy. History is stored only in this browser/device.</p>
+    </section>
+
     <section class="card full">
       <h2>IBJA benchmark · AM / PM</h2>
       <p class="muted" style="font-size:13px;margin-top:-5px">IBJA rates already include import/customs levies and exclude GST. Enter official rates per 10g, or fetch through an IBJA API subscription token.</p>
+      <div class="fieldgrid">
+        <div><label>IBJA 999 / 24K AM (₹ per 10g)</label><input id="ibja999am" type="number" step="0.01" placeholder="Enter AM 999 rate"></div>
+        <div><label>IBJA 999 / 24K PM (₹ per 10g)</label><input id="ibja999pm" type="number" step="0.01" placeholder="Enter PM 999 rate"></div>
+        <div><label>IBJA 916 / 22K AM (₹ per 10g)</label><input id="ibja916am" type="number" step="0.01" placeholder="Enter AM 916 rate"></div>
+        <div><label>IBJA 916 / 22K PM (₹ per 10g)</label><input id="ibja916pm" type="number" step="0.01" placeholder="Enter PM 916 rate"></div>
+      </div>
+      <div class="fieldgrid" style="margin-top:11px">
+        <div><label>IBJA API access token (optional)</label><input id="ibjaToken" type="password" autocomplete="off" placeholder="Paste subscription token"></div>
+        <div><label>IBJA date (DD/MM/YYYY)</label><input id="ibjaDate" type="text" placeholder="Auto: today's date"></div>
+      </div>
+      <div class="actions"><button id="fetchIbja">Fetch IBJA AM / PM</button><button class="secondary" id="clearIbja">Clear IBJA fields</button></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px"><input id="autoIbja" type="checkbox" style="width:auto"> Automatically fetch IBJA when this page opens (requires token)</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input id="rememberIbjaToken" type="checkbox" style="width:auto"> Remember API token on this device</label>
+      <div class="status" id="ibjaStatus">Manual entry works without an API token. Official API access is subscription-based.</div>
+      <div class="grid" style="margin-top:12px">
+        <div>
+          <div class="row"><span>Selected IBJA 24K (₹/g)</span><b id="ibja24g">—</b></div>
+          <div class="row"><span>Selected IBJA 22K (₹/g)</span><b id="ibja22g">—</b></div>
+        </div>
+        <div>
+          <div class="row"><span>Intl model vs IBJA 24K</span><b id="diff24">—</b></div>
+          <div class="row"><span>Intl model vs IBJA 22K</span><b id="diff22">—</b></div>
+        </div>
+      </div>
+      <p class="tiny">Comparison uses the latest entered AM/PM figure (PM preferred). Difference = international conversion + entered duty/premium minus IBJA. IBJA 999/916 values are per 10g. Saturday, Sunday and holidays may have no new benchmark.</p>
+    </section>
+
+    <section class="card full">
+      <h2>5. Final jewellery bill</h2>
+      <div class="grid">
+        <div>
+          <div class="row"><span>Gold value</span><b id="goldValue">₹—</b></div>
+          <div class="row"><span>VA / wastage amount</span><b id="vaValue">₹—</b></div>
+          <div class="row"><span>Making charges</span><b id="makingValue">₹—</b></div>
+          <div class="row"><span>Subtotal</span><b id="subtotal">₹—</b></div>
+          <div class="row"><span>GST estimate</span><b id="gstValue">₹—</b></div>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;background:#f2f8f4;border-radius:14px;padding:17px">
+          <div class="sub">Estimated total bill</div><div class="result" id="finalBill">₹—</div><div class="tiny">Illustrative only; compare with jeweller's tax invoice.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="note"><b>Important:</b> This is an educational estimate, not an official IBJA or jeweller quote. Jewellery bill source can be International model, IBJA benchmark or Manual jeweller rate. IBJA benchmark already includes import/customs levies, so do not add duty again to the IBJA value. Official API needs a subscription token; browser CORS may prevent direct fetch, in which case use manual entry. It applies the entered duty as a simple percentage to the international converted value. Actual Indian benchmark pricing can include additional market factors; avoid adding duty or premium again if already reflected in a quoted benchmark. Import IGST is not treated as a permanent cost where eligible input tax credit is available. Retail GST and shop billing treatment should be verified on the invoice.</div>
+  <div class="actions"><button class="secondary" id="save">Save inputs on this device</button><button class="secondary" id="reset">Reset defaults</button></div>
+  <p class="tiny">Saved settings stay in this browser on this device. For use on both phone and computer, host this folder as a website or install it as a PWA from a secure HTTPS site.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ids=['xau','fx','duty','premium','purity','weight','making','va','gst','ibja999am','ibja999pm','ibja916am','ibja916pm','ibjaDate','bullion999','bullion916','bullionDate','billSource','manualRate','autoIbja','rememberIbjaToken'];
+const defaults={xau:3880,fx:94.94,duty:15,premium:0,purity:22,weight:10,making:0,va:0,gst:3,billSource:'intl',manualRate:0,bullion999:0,bullion916:0,bullionDate:'',autoIbja:false,rememberIbjaToken:false};
+let mode='manual';
+let current={xau:3880,fx:94.94};
+const num=id=>Math.max(0,Number($(id).value)||0);
+const inr=v=>'₹'+(Number.isFinite(v)?v:0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+function calc(){
+ const xau=num('xau'),fx=num('fx'),duty=num('duty'),premium=num('premium');
+ const base=xau*fx/31.1035;
+ const r24=base*(1+duty/100)*(1+premium/100),r22=r24*22/24;
+ const is22=$('purity').value==='22';
+ const intlSelected=is22?r22:r24;
+ const ibjaSelected=latestIbja(is22?'916':'999');
+ const source=$('billSource').value;
+ const manualSelected=num('manualRate');
+ let selected=intlSelected, sourceText='Bill uses International model rate.';
+ if(source==='ibja'){
+   if(ibjaSelected!==null){selected=ibjaSelected/10;sourceText='Bill uses IBJA '+(is22?'916 / 22K':'999 / 24K')+' benchmark ('+( $('ibjaDate').value||'selected date')+').';}
+   else {sourceText='IBJA rate is not entered/fetched yet. International model is temporarily shown; fetch IBJA before relying on this bill.';}
+ } else if(sourceor fetch through an IBJA API subscription token.</p>
       <div class="fieldgrid">
         <div><label>IBJA 999 / 24K AM (₹ per 10g)</label><input id="ibja999am" type="number" step="0.01" placeholder="Enter AM 999 rate"></div>
         <div><label>IBJA 999 / 24K PM (₹ per 10g)</label><input id="ibja999pm" type="number" step="0.01" placeholder="Enter PM 999 rate"></div>
